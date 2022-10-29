@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>Dashboard</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-select/1.13.1/css/bootstrap-select.min.css"
+    rel="stylesheet">
+  <link rel="stylesheet" href="pnotify.custom.min.css">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    [v-cloak] {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="app" v-cloak>
+    <div v-if="loggedin == false && currentTab == 'login'">
+      <div class="container">
+        <div class="card card-container">
+          <img id="profile-img" class="profile-img-card" src="logo.png" />
+          <p id="profile-name" style="color:rgb(104, 145, 162); font-size: 32px;" class="profile-name-card">Thành Viên</p>
+          <form @submit.prevent="login" class="form-signin">
+            <div style="margin-left: 77px; width: 70%;">
+              <span id="reauth-email" class="reauth-email"></span>
+              <input type="text" name="waddress" class="form-control inputEmail" placeholder="Nhập Địa chỉ ví" autofocus
+                value="">
+            </div>
+
+            <p style="text-align: center; font-size: 16px;">hoặc chọn</p>
+            <div style="margin-left: 77px; width: 70%;">
+              <select name="waddress2" class="form-control inputEmail" placeholder="Địa chỉ ví" autofocus>
+                <option value="">Chọn Địa chỉ ví</option>
+                <option v-for="acc in metamaskAccounts" :value="acc">{{acc.substr(0, 8)+'...'+acc.substr(-6)}}</option>
+              </select>
+            </div>
+            <br>
+            <div style="margin-left: 176px; margin-top: 3%;">
+              <button class="btn btn-lg btn-primary btn-block btn-signin" style="width: 51%;" type="submit">Đăng nhập</button>
+
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div v-if="loggedin == false && currentTab == 'otp'">
+      <div class="container">
+        <div class="card card-container">
+          <img id="profile-img" class="profile-img-card" src="logo.png" />
+          <p id="profile-name" class="profile-name-card">Mã xác thực OTP</p>
+          <form @submit.prevent="verifyOTP" class="form-signin">
+            <span id="reauth-email" class="reauth-email"></span>
+            <div style="margin-left: 77px;margin-top: 3%;">
+              <input type="text" style="width: 84%;" name="otp_code" class="form-control inputEmail" placeholder="OTP" required autofocus
+              value="">
+            </div>
+            <div style="margin-left: 176px; margin-top: 6%;">
+              <button class="btn btn-lg btn-primary btn-block btn-signin" style="width: 51%;"  type="submit">Xác nhận</button>
+
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div v-if="loggedin == false && currentTab == 'challenge'">
+      <div class="container">
+        <div class="card card-container">
+          <img id="profile-img" class="profile-img-card" src="logo.png" />
+          <p id="profile-name" class="profile-name-card" style="color: rgb(104, 145, 162); font-size: 32px;">Login Challenge</p>
+          <form class="form-signin">
+            <div style="margin-top: 2%;margin-left: 82px;"><span>Vui lòng thực hiện smartContract "<a target="_blank"
+              :href="'https://kovan.etherscan.io/address/'+loginAddress">Login</a>" với nội dung sau:</span></div>
+            <div style="margin-left: 77px;margin-top: 3%;">
+              <input type="text" readonly class="form-control inputEmail" style="width: 84%;" placeholder="Challenge"
+              :value="login_challenge">
+            </div>
+            <div style="margin-left: 176px; margin-top: 6%;">
+              <button v-if="enableDoTransaction" @click="metamaskDoTransaction"
+              class="btn btn-lg btn-primary btn-block btn-signin" style="width: 51%;" type="button">Xác nhận</button>
+            </div>
+
+          </form>
+        </div>
+      </div>
+    </div>
+    <div v-if="loggedin == false && currentTab == 'register'">
+      <div class="container">
+        <div class="card card-container">
+          <img id="profile-img" class="profile-img-card" src="logo.png" />
+          <p id="profile-name" class="profile-name-card">Đăng ký</p>
+          <form @submit.prevent="register" class="form-signin">
+            <div>
+              <span id="reauth-email" class="reauth-email">Bạn chưa có tài khoản, vui lòng đăng ký</span>
+            </div>
+            <div style="margin-left: 77px;">
+              <input name="name" value="" style="width: 84%;" type="text" class="form-control inputEmail" placeholder="Tên của bạn">
+
+            </div>
+            <div style="margin-left: 176px; margin-top: 6%;">
+            <button class="btn btn-lg btn-primary btn-block btn-signin" style="width: 51%;" type="submit">Xác nhận</button>
+
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div v-if="loggedin">
+      <div class="container-fluid main-container">
+        <div class="container">
+          <div class="row">
+            <div class="col-md-12">
+              <div class="card">
+                <ul class="nav nav-tabs" role="tablist">
+                  <li v-for="tab in tabs" :class="{active: currentTab == tab.component}"
+                    @click="currentTab = tab.component"><a href="#">{{tab.name}}</a></li>
+                </ul>
+
+                <div class="tab-content">
+                  <div role="tabpanel" class="tab-panel">
+                    <div class="row">
+                      <h2>Chào {{user.name}}</h2>
+                      <button class="btn btn-primary" @click="changeSecret">{{user.secret ? 'Đổi' : 'Tạo'}} OTP</button>
+                      <button class="btn btn-danger" v-if="!!user.secret" @click="deleteSecret">Xoá OTP</button>
+                      <button class="btn btn-danger" @click="logout()">Đăng xuất</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal fade" tabindex="-1" role="dialog" id="show-qrcode">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span
+                aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title">Quét mã QR</h4>
+          </div>
+          <div class="modal-body" style="text-align: center">
+            <p>Vui lòng dùng ứng dụng Google Authenticator quét mã qr dưới đây:</p>
+            <img v-if="otpQrcodeURL" :src="otpQrcodeURL" />
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">OK</button>
+          </div>
+        </div><!-- /.modal-content -->
+      </div><!-- /.modal-dialog -->
+    </div><!-- /.modal -->
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jsencrypt/2.3.1/jsencrypt.min.js"></script>
+  <script src="./pnotify.custom.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.1.2/socket.io.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/web3/1.3.0/web3.min.js"
+    integrity="sha512-ppuvbiAokEJLjOUQ24YmpP7tTaLRgzliuldPRZ01ul6MhRC+B8LzcVkXmUsDee7ne9chUfApa9/pWrIZ3rwTFQ=="
+    crossorigin="anonymous"></script>
+  <script>
+    (function () {
+      var js = document.createElement('script')
+      js.src = './app.js?' + Math.random()
+      document.body.appendChild(js)
+    })()
+  </script>
+</body>
+
+</html>

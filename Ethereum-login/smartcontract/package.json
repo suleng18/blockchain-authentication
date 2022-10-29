@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "kovan-deploy": "truffle migrate --network kovan",
+    "kovan-redeploy": "truffle migrate --reset --network kovan",
+    "bsct-deploy": "truffle migrate --network bsct",
+    "bsct-redeploy": "truffle migrate --reset --network bsct"
+  },
+  "dependencies": {
+    "@truffle/hdwallet-provider": "^1.1.0"
+  }
+}
